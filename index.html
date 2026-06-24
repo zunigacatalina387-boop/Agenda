@@ -35,7 +35,7 @@
 
         .container {
             width: 100%;
-            max-width: 750px;
+            max-width: 850px;
         }
 
         header {
@@ -50,7 +50,7 @@
             letter-spacing: 1px;
         }
 
-        /* --- BILLETERA (Estilo Superior) --- */
+        /* --- BILLETERA (Actualizada a 4 columnas) --- */
         .wallet-card {
             background-color: var(--card-bg);
             border: 2px solid var(--pink-pastel);
@@ -59,13 +59,19 @@
             margin-bottom: 25px;
             box-shadow: 0 8px 20px rgba(243, 193, 193, 0.25);
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 15px;
             text-align: center;
         }
 
+        @media (max-width: 600px) {
+            .wallet-card {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         .wallet-item h3 {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.8px;
             margin-bottom: 10px;
@@ -73,15 +79,15 @@
         }
 
         .wallet-item .amount {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: bold;
         }
 
         .wallet-item input {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: bold;
             width: 100%;
-            max-width: 140px;
+            max-width: 130px;
             text-align: center;
             border: 1px dashed var(--pink-pastel);
             border-radius: 10px;
@@ -250,6 +256,7 @@
             <h1>🌸 Mi Lista de Deseos 🌸</h1>
         </header>
 
+        <!-- BILLETERA EN PESO CHILENO -->
         <div class="wallet-card">
             <div class="wallet-item">
                 <h3>💵 Mi Saldo Actual</h3>
@@ -259,15 +266,20 @@
                 </div>
             </div>
             <div class="wallet-item">
-                <h3>🛍️ Total Urgentes</h3>
+                <h3>🔥 Total Urgentes</h3>
                 <div class="amount" id="committedAmount">$0</div>
             </div>
             <div class="wallet-item">
                 <h3>✨ Saldo Restante</h3>
                 <div class="amount" id="remainingBalance">$100.000</div>
             </div>
+            <div class="wallet-item">
+                <h3>💰 Total de la Lista</h3>
+                <div class="amount" id="totalWishlistAmount" style="color: #65534C;">$0</div>
+            </div>
         </div>
 
+        <!-- PANEL DE DESEOS -->
         <div class="panel">
             <div class="wishlist-form">
                 <input type="text" id="wishTitle" placeholder="¿Qué quieres comprar? (Ej: Zapatos de fútbol Benja)">
@@ -284,18 +296,19 @@
             </div>
 
             <div class="wish-list" id="wishList">
-                </div>
+                <!-- Ítems dinámicos aquí -->
+            </div>
         </div>
     </div>
 
     <script>
         // Cargar datos locales del navegador
-        let wishes = JSON.parse(localStorage.getItem('wishes_v2')) || [];
-        document.getElementById('balanceInput').value = localStorage.getItem('userBalance_v2') || 100000;
+        let wishes = JSON.parse(localStorage.getItem('wishes_v3')) || [];
+        document.getElementById('balanceInput').value = localStorage.getItem('userBalance_v3') || 100000;
 
         function saveToLocalStorage() {
-            localStorage.setItem('wishes_v2', JSON.stringify(wishes));
-            localStorage.setItem('userBalance_v2', document.getElementById('balanceInput').value);
+            localStorage.setItem('wishes_v3', JSON.stringify(wishes));
+            localStorage.setItem('userBalance_v3', document.getElementById('balanceInput').value);
         }
 
         // Formato de miles Chileno
@@ -366,7 +379,7 @@
         function calculateWallet() {
             const balance = Number(document.getElementById('balanceInput').value);
             
-            // Sumar solo los pendientes marcados como "Urgente"
+            // 1. Sumar solo los pendientes marcados como "Urgente"
             const committed = wishes.reduce((sum, wish) => {
                 if (wish.priority === 'Urgente' && !wish.bought) {
                     return sum + wish.price;
@@ -374,9 +387,19 @@
                 return sum;
             }, 0);
 
+            // 2. Sumar ABSOLUTAMENTE TODO lo que no se ha comprado todavía (Meta de ahorro total)
+            const totalWishlist = wishes.reduce((sum, wish) => {
+                if (!wish.bought) {
+                    return sum + wish.price;
+                }
+                return sum;
+            }, 0);
+
             const remaining = balance - committed;
 
+            // Mostrar montos formateados en la interfaz
             document.getElementById('committedAmount').innerText = `$${formatCLP(committed)}`;
+            document.getElementById('totalWishlistAmount').innerText = `$${formatCLP(totalWishlist)}`;
             
             const remainingDiv = document.getElementById('remainingBalance');
             remainingDiv.innerText = `$${formatCLP(remaining)}`;
@@ -386,7 +409,7 @@
             } else {
                 remainingDiv.classList.remove('negative');
             }
-            localStorage.setItem('userBalance_v2', balance);
+            localStorage.setItem('userBalance_v3', balance);
         }
 
         // Carga inicial
